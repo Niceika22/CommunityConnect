@@ -10,8 +10,8 @@ export const AuthProvider = ({ children }) => {
 
   console.log("VITE_API_URL:", import.meta.env.VITE_API_URL, "Type:", typeof import.meta.env.VITE_API_URL);
 
-  // Configure axios defaults
-  axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  // Configure axios defaults - HARDCODED to ensure it always hits the correct backend
+  axios.defaults.baseURL = 'http://localhost:5000/api';
   console.log("AXIOS BASE URL:", axios.defaults.baseURL);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
       error => {
         const message = error.response?.data?.message || 'Something went wrong';
         if (error.response?.status === 401) {
-          if (error.config.url !== '/auth/me' && !error.config.url.includes('/auth/login')) {
+          if (error.config?.url !== '/auth/me' && !error.config?.url?.includes('/auth/login')) {
             toast.error('Session expired. Please log in again.');
             logout();
           }

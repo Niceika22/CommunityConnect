@@ -26,7 +26,15 @@ export default function Login() {
       if (userData.role === 'HELP_SEEKER') navigate('/seeker-dashboard');
       else if (userData.role === 'SERVICE_PROVIDER') navigate('/provider-dashboard');
       else if (userData.role === 'ADMIN') navigate('/admin-dashboard');
+      else {
+        console.error("Unknown role:", userData.role);
+        setError('Unknown role assigned to user');
+      }
     } catch (err) {
+      console.error("FRONTEND LOGIN ERROR:", err);
+      if (err.response) {
+        console.error("RESPONSE DATA:", err.response.data);
+      }
       setError(err.response?.data?.message || 'Login failed');
     } finally {
       setIsSubmitting(false);

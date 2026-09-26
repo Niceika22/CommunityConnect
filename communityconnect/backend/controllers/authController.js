@@ -9,8 +9,9 @@ const generateToken = (id) => {
 exports.register = async (req, res) => {
   try {
     const { name, email, phone, password, role, latitude, longitude, providerDetails } = req.body;
+    const normalizedEmail = email ? email.trim().toLowerCase() : '';
 
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email: normalizedEmail });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
@@ -19,7 +20,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const userObj = {
-      name, email, phone, password: hashedPassword, role
+      name, email: normalizedEmail, phone, password: hashedPassword, role
     };
 
     if (latitude && longitude) {
@@ -50,23 +51,35 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
+  console.log("----- LOGIN ATTEMPT -----");
+  console.log("Endpoint reached");
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const normalizedEmail = email ? email.trim().toLowerCase() : '';
+    console.log(`Received email: ${email} -> Normalized: ${normalizedEmail}`);
+    
+    const user = await User.findOne({ email: normalizedEmail });
+    console.log(`Matching user found: ${!!user}`);
 
-    if (user && (await bcrypt.compare(password, user.password))) {
-      res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        location: user.location,
-        providerDetails: user.providerDetails,
-        token: generateToken(user._id)
-      });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
+    if (user) {
+      const isMatch = await bcrypt.compare(password, user.password);
+      console.log(`Password comparison result: ${isMatch}`);
+      
+      if (isMatch) {
+        console.log("JWT generation success");
+        return res.json({
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          location: user.location,
+          providerDetails: user.providerDetails,
+          token: generateToken(user._id)
+        });
+      }
     }
+    
+    res.status(401).json({ message: 'Invalid email or password' });
   } catch (error) {
     console.error("LOGIN ERROR:", error);
     res.status(500).json({ message: error.message });
